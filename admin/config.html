@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración</title>
+    <link rel="stylesheet" href="/assets/css/config.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Nueva cerradura</h1>
+        <ion-icon name="exit-outline" class="logout-icon" onclick="redirectTo('../login.html')"></ion-icon>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <div class="input-container">
+                <label for="nombre" class="label">Nombre</label>
+                <p class="description">Selecciona el nombre de la puerta.</p>
+                <select id="nombreDropdown" class="dropdown">
+                    <option value="">Selecciona una cerradura</option>
+                </select>
+            </div>
+
+            <div class="input-container">
+                <label for="alertas" class="label">Alertas valores fuera del rango normal</label>
+                <p class="description">Habilita alertas para valores fuera del rango normal.</p>
+                <div class="icon-container">
+                    <ion-icon name="notifications-outline" id="alertasIcon" class="icon"></ion-icon>
+                </div>
+            </div>
+
+            <div id="alertasConfig" class="hidden">
+                <div class="input-container">
+                    <label for="alertStartTime" class="label">Hora de inicio de alertas</label>
+                    <p class="description">Hora a partir de la cual se enviarán alertas.</p>
+                    <input type="time" id="alertStartTime" class="input">
+                </div>
+                <div class="input-container">
+                    <label for="alertEndTime" class="label">Hora de fin de alertas</label>
+                    <p class="description">Hora hasta la cual se enviarán alertas.</p>
+                    <input type="time" id="alertEndTime" class="input">
+                </div>
+            </div>
+
+            <div class="input-container">
+                <label for="lockStartTime" class="label">Hora de inicio de bloqueo</label>
+                <p class="description">Hora a partir de la cual la cerradura no podrá abrirse.</p>
+                <input type="time" id="lockStartTime" class="input">
+            </div>
+            <div class="input-container">
+                <label for="lockEndTime" class="label">Hora de fin de bloqueo</label>
+                <p class="description">Hora hasta la cual la cerradura no podrá abrirse.</p>
+                <input type="time" id="lockEndTime" class="input">
+            </div>
+
+            <div class="input-container">
+                <label for="alertType" class="label">Tipo de Alerta</label>
+                <p class="description">Selecciona el tipo de alerta.</p>
+                <select id="alertTypeDropdown" class="dropdown">
+                    <option value="SMS">SMS</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                </select>
+            </div>
+
+            <div class="input-container">
+                <label for="updateTime" class="label">Tiempo de actualización (minutos)</label>
+                <p class="description">Intervalo de tiempo en minutos para actualizar la configuración.</p>
+                <select id="updateTimeDropdown" class="dropdown">
+                    <option value="1">1 minuto</option>
+                    <option value="5" selected>5 minutos</option>
+                    <option value="10">10 minutos</option>
+                    <option value="30">30 minutos</option>
+                </select>
+            </div>
+
+            <div class="button-container">
+                <button class="button" onclick="saveConfiguration()">Guardar Configuración</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <a href="add-door.html" class="nav-link">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            <span>Nuevo</span>
+        </a>
+        <a href="config.html" class="nav-link active">
+            <ion-icon name="settings-outline"></ion-icon>
+            <span>Config</span>
+        </a>
+        <a href="historico.html" class="nav-link">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>Histórico</span>
+        </a>
+        <a href="tiempo-r.html" class="nav-link">
+            <ion-icon name="bar-chart-outline"></ion-icon>
+            <span>T-R</span>
+        </a>
+        <a href="users.html" class="nav-link">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>Usuarios</span>
+        </a>
+        <a href="doors.html" class="nav-link">
+            <ion-icon name="key-outline"></ion-icon>
+            <span>Puertas</span>
+        </a>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const currentPath = window.location.pathname.split('/').pop();
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+
+            const userId = localStorage.getItem('userId');
+            fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/`)
+                .then(response => response.json())
+                .then(data => {
+                    const nombreDropdown = document.getElementById('nombreDropdown');
+                    data.forEach(lock => {
+                        const option = document.createElement('option');
+                        option.value = lock._id;
+                        option.textContent = lock.lockName;
+                        nombreDropdown.appendChild(option);
+                    });
+                });
+
+            const alertasIcon = document.getElementById('alertasIcon');
+            const alertasConfig = document.getElementById('alertasConfig');
+
+            alertasIcon.addEventListener('click', () => {
+                if (alertasIcon.getAttribute('name') === 'notifications-outline') {
+                    alertasIcon.setAttribute('name', 'notifications-off-outline');
+                    alertasConfig.classList.add('hidden');
+                } else {
+                    alertasIcon.setAttribute('name', 'notifications-outline');
+                    alertasConfig.classList.remove('hidden');
+                }
+            });
+        });
+
+        function redirectTo(url) {
+            window.location.href = url;
+        }
+
+        function saveConfiguration() {
+            const lockId = document.getElementById('nombreDropdown').value;
+
+            const alertasEnabled = document.getElementById('alertasIcon').getAttribute('name') !== 'notifications-outline';
+            const alertStartTime = document.getElementById('alertStartTime').value;
+            const alertEndTime = document.getElementById('alertEndTime').value;
+            const lockStartTime = document.getElementById('lockStartTime').value;
+            const lockEndTime = document.getElementById('lockEndTime').value;
+            const alertType = document.getElementById('alertTypeDropdown').value;
+            const updateTime = document.getElementById('updateTimeDropdown').value;
+
+            // Crear el array configurationLock con los valores necesarios
+            const configurationLock = [
+                `alertasEnabled:${alertasEnabled}`,
+                `alertStartTime:${alertStartTime}`,
+                `alertEndTime:${alertEndTime}`,
+                `lockStartTime:${lockStartTime}`,
+                `lockEndTime:${lockEndTime}`,
+                `alertType:${alertType}`,
+                `updateTime:${updateTime}`
+            ];
+
+            const userId = localStorage.getItem('userId');
+
+            // Enviar la solicitud PUT con el array configurationLock
+            fetch(`http://localhost:4000/api/users/${userId}/locks/${lockId}/configurationLock`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ configurationLock }) // Enviar el array como objeto
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    alert('Configuración guardada correctamente');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+
+<body>
+    <div class="container">
+        <img src="/assets/images/background-image.png" alt="Background Image" class="background-image">
+        <h1 class="welcome-text">Inicia Sesión</h1>
+        <div class="card">
+            <div class="input-container">
+                <label for="email" class="label">Correo Electrónico</label>
+                <input type="email" id="email" placeholder="Ingrese su Correo Electrónico" class="input">
+            </div>
+            <div class="input-container">
+                <label for="password" class="label">Contraseña</label>
+                <input type="password" id="password" placeholder="Ingrese su contraseña" class="input">
+            </div>
+            <div class="button-container">
+                <button class="button" onclick="login()">Iniciar Sesión</button>
+                <a href="register.html" class="link">¿No tienes cuenta? Crea una aquí</a>
+            </div>
+        </div>
+    </div>
+    <script src="js/login.js"></script>
+</body>
+
+</html>

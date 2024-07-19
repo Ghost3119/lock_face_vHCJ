@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puertas</title>
+    <link rel="stylesheet" href="/assets/css/doors.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Puertas</h1>
+        <ion-icon name="exit-outline" class="logout-icon" onclick="redirectTo('../login.html')"></ion-icon>
+    </header>
+
+    <div class="container">
+        <div id="doorsContainer" class="doors-container">
+            <!-- Puertas serán cargadas aquí -->
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h2>Eliminar</h2>
+            <p>¿Desea eliminar la cerradura permanentemente?</p>
+            <button class="delete-btn" onclick="deleteLock()">Borrar</button>
+            <button class="cancel-btn" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <a href="add-door.html" class="nav-link">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            <span>Nuevo</span>
+        </a>
+        <a href="config.html" class="nav-link">
+            <ion-icon name="settings-outline"></ion-icon>
+            <span>Config</span>
+        </a>
+        <a href="historico.html" class="nav-link">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>Histórico</span>
+        </a>
+        <a href="tiempo-r.html" class="nav-link">
+            <ion-icon name="bar-chart-outline"></ion-icon>
+            <span>T-R</span>
+        </a>
+        <a href="users.html" class="nav-link">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>Usuarios</span>
+        </a>
+        <a href="doors.html" class="nav-link active">
+            <ion-icon name="key-outline"></ion-icon>
+            <span>Puertas</span>
+        </a>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const userId = localStorage.getItem('userId');
+            const currentPath = window.location.pathname.split('/').pop();
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+
+            fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    const doorsContainer = document.getElementById('doorsContainer');
+                    doorsContainer.innerHTML = '';
+                    data.forEach(lock => {
+                        const card = document.createElement('div');
+                        card.classList.add('door-card');
+
+                        const icon = document.createElement('ion-icon');
+                        icon.setAttribute('name', 'lock-closed-outline');
+                        icon.classList.add('door-icon');
+
+                        const name = document.createElement('p');
+                        name.classList.add('door-name');
+                        name.textContent = lock.lockName;
+
+                        const deleteIcon = document.createElement('ion-icon');
+                        deleteIcon.setAttribute('name', 'close-outline');
+                        deleteIcon.classList.add('close-icon');
+                        deleteIcon.addEventListener('click', () => openModal(lock._id));
+
+                        card.appendChild(icon);
+                        card.appendChild(name);
+                        card.appendChild(deleteIcon);
+
+                        doorsContainer.appendChild(card);
+                    });
+                });
+
+            const modal = document.getElementById('deleteModal');
+
+            window.openModal = function (lockId) {
+                modal.style.display = 'block';
+                modal.setAttribute('data-lock-id', lockId);
+            }
+
+            window.closeModal = function () {
+                modal.style.display = 'none';
+            }
+
+            window.deleteLock = function () {
+                const lockId = modal.getAttribute('data-lock-id');
+                fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/${lockId}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('La solicitud falló con el estado ' + response.status);
+                        }
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json();
+                        } else {
+                            throw new Error('Se esperaba JSON, pero se recibió: ' + contentType);
+                        }
+                    })
+                    .then(data => {
+                        closeModal();
+                        // Refrescar la lista de puertas
+                        document.location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error al eliminar la cerradura:', error);
+                        // Manejar el error adecuadamente aquí, por ejemplo, mostrando un mensaje al usuario
+                    });
+
+                function redirectTo(url) {
+                    window.location.href = url;
+                }
+            }
+
+        });
+    </script>
+</body>
+
+</html>

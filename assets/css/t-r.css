@@ -1,0 +1,175 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fafafa;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    background-color: #fff;
+}
+
+header h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+header .logout-icon {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.container {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    color: #111111;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.log-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.log-list li {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+.camera-icon {
+    color: green;
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.person-icon {
+    color: red;
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.button {
+    background-color: #652CB3;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
+    max-width: 300px;
+    margin-top: 10px;
+}
+
+/* Estilos para la barra de navegación */
+.navbar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background-color: #fff;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.nav-link ion-icon {
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.nav-link span {
+    font-size: 12px;
+    margin-top: 4px;
+    text-align: center;
+}
+
+/* Estilos para el enlace activo */
+.nav-link.active ion-icon,
+.nav-link.active span {
+    color: #652CB3;
+}
+
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 20px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    .log-list li {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .camera-icon, .person-icon {
+        font-size: 20px;
+    }
+
+    .button {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .navbar {
+        padding: 8px;
+    }
+
+    .nav-link ion-icon {
+        font-size: 24px;
+    }
+
+    .nav-link span {
+        font-size: 10px;
+    }
+}

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registros Históricos de Usuarios</title>
+    <link rel="stylesheet" href="/assets/css/historico.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Histórico</h1>
+        <ion-icon name="exit-outline" class="logout-icon" onclick="redirectTo('../login.html')"></ion-icon>
+    </header>
+
+    <div class="container">
+        <h1 class="title">Registros de usuarios históricos</h1>
+        <div class="filters">
+            <div class="input-container">
+                <label for="lockDropdown" class="label">Selecciona una cerradura</label>
+                <select id="lockDropdown" class="dropdown">
+                    <option value="">Selecciona una cerradura</option>
+                </select>
+            </div>
+            <div class="buttons">
+                <button class="button mostrar-todos">Mostrar todos</button>
+                <button class="button mostrar-conocidos">Mostrar conocidos</button>
+                <button class="button mostrar-desconocidos">Mostrar desconocidos</button>
+            </div>
+            <div class="buttons">
+                <button class="button export-pdf">Exportar PDF</button>
+                <button class="button export-excel">Exportar Excel</button>
+            </div>
+            <div class="filter-by-date">
+                <select class="date-select" id="dateFilter">
+                    <option value="" disabled selected>Filtrar por fecha</option>
+                </select>
+            </div>
+            <div class="date-range">
+                <select class="date-select short" id="startDate">
+                    <option value="" disabled selected>F-Inicio</option>
+                </select>
+                <select class="date-select short" id="endDate">
+                    <option value="" disabled selected>F-Fin</option>
+                </select>
+                <button class="button filtrar-rango" id="filterRange">Filtrar por rango</button>
+            </div>
+        </div>
+
+        <ul id="logList" class="log-list">
+            <!-- Aquí se añadirán los logs -->
+        </ul>
+    </div>
+
+    <div id="logModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <img id="modalImage" src="" alt="Log Image">
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <a href="add-door.html" class="nav-link">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            <span>Nuevo</span>
+        </a>
+        <a href="config.html" class="nav-link">
+            <ion-icon name="settings-outline"></ion-icon>
+            <span>Config</span>
+        </a>
+        <a href="historico.html" class="nav-link active">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>Histórico</span>
+        </a>
+        <a href="tiempo-r.html" class="nav-link">
+            <ion-icon name="bar-chart-outline"></ion-icon>
+            <span>T-R</span>
+        </a>
+        <a href="users.html" class="nav-link">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>Usuarios</span>
+        </a>
+        <a href="doors.html" class="nav-link">
+            <ion-icon name="key-outline"></ion-icon>
+            <span>Puertas</span>
+        </a>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userId = localStorage.getItem('userId');
+            const lockDropdown = document.getElementById('lockDropdown');
+            const dateFilter = document.getElementById('dateFilter');
+            const startDateSelect = document.getElementById('startDate');
+            const endDateSelect = document.getElementById('endDate');
+            const logList = document.getElementById('logList');
+            let currentLockId = '';
+            let allLogs = []; // Variable para almacenar todos los logs
+            let allDates = new Set(); // Usaremos un Set para evitar duplicados
+
+            // Obtener las cerraduras del API
+            fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(lock => {
+                        const option = document.createElement('option');
+                        option.value = lock._id;
+                        option.textContent = lock.lockName;
+                        lockDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching locks:', error));
+
+            function fetchAllLogs() {
+                if (currentLockId) {
+                    fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/${currentLockId}/logs`)
+                        .then(response => response.json())
+                        .then(data => {
+                            allLogs = data; // Guardar todos los logs
+                            populateDateSelectors(); // Poblamos los selectores de fechas
+                            showAllLogs(); // Mostrar todos los logs inicialmente
+                        })
+                        .catch(error => console.error('Error fetching logs:', error));
+                }
+            }
+
+            function showAllLogs() {
+                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                allLogs.forEach(log => {
+                    const logItem = document.createElement('li');
+                    logItem.textContent = `Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`;
+                    logItem.classList.add(log.tipo);
+                    logList.appendChild(logItem);
+                });
+            }
+
+            function showKnownLogs() {
+                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                allLogs
+                    .filter(log => log.tipo === 'conocido')
+                    .forEach(log => {
+                        const logItem = document.createElement('li');
+                        logItem.textContent = `Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`;
+                        logItem.classList.add(log.tipo);
+                        logList.appendChild(logItem);
+                    });
+            }
+
+            function showUnknownLogs() {
+                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                allLogs
+                    .filter(log => log.tipo === 'desconocido')
+                    .forEach(log => {
+                        const logItem = document.createElement('li');
+                        logItem.textContent = `Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`;
+                        logItem.classList.add(log.tipo);
+                        logList.appendChild(logItem);
+                    });
+            }
+
+            function filterByDate(selectedDate) {
+                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                allLogs
+                    .filter(log => log.dia === selectedDate)
+                    .forEach(log => {
+                        const logItem = document.createElement('li');
+                        logItem.textContent = `Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`;
+                        logItem.classList.add(log.tipo);
+                        logList.appendChild(logItem);
+                    });
+            }
+
+            function filterByDateRange(startDate, endDate) {
+                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                allLogs
+                    .filter(log => new Date(log.dia) >= new Date(startDate) && new Date(log.dia) <= new Date(endDate))
+                    .forEach(log => {
+                        const logItem = document.createElement('li');
+                        logItem.textContent = `Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`;
+                        logItem.classList.add(log.tipo);
+                        logList.appendChild(logItem);
+                    });
+            }
+
+            function populateDateSelectors() {
+                allDates.clear(); // Limpiar fechas anteriores
+
+                allLogs.forEach(log => allDates.add(log.dia));
+
+                dateFilter.innerHTML = '<option value="" disabled selected>Filtrar por fecha</option>';
+                startDateSelect.innerHTML = '<option value="" disabled selected>F-Inicio</option>';
+                endDateSelect.innerHTML = '<option value="" disabled selected>F-Fin</option>';
+
+                allDates.forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date;
+                    option.textContent = date;
+                    dateFilter.appendChild(option);
+
+                    const startOption = option.cloneNode(true);
+                    startDateSelect.appendChild(startOption);
+
+                    const endOption = option.cloneNode(true);
+                    endDateSelect.appendChild(endOption);
+                });
+            }
+
+            function handleLockChange() {
+                currentLockId = lockDropdown.value;
+                if (currentLockId) {
+                    fetchAllLogs(); // Obtener todos los logs cuando se cambia la cerradura
+                }
+            }
+
+            lockDropdown.addEventListener('change', handleLockChange);
+
+            document.querySelector('.mostrar-todos').addEventListener('click', showAllLogs);
+            document.querySelector('.mostrar-conocidos').addEventListener('click', showKnownLogs);
+            document.querySelector('.mostrar-desconocidos').addEventListener('click', showUnknownLogs);
+
+            document.getElementById('dateFilter').addEventListener('change', (event) => {
+                const selectedDate = event.target.value;
+                if (selectedDate) {
+                    filterByDate(selectedDate);
+                }
+            });
+
+            document.getElementById('filterRange').addEventListener('click', () => {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                if (startDate && endDate) {
+                    filterByDateRange(startDate, endDate);
+                }
+            });
+
+            document.querySelector('.export-pdf').addEventListener('click', () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                doc.text('Registros de Usuarios Históricos', 10, 10);
+
+                allLogs.forEach((log, index) => {
+                    doc.text(`Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`, 10, 20 + (index * 10));
+                });
+
+                doc.save('registros_historicos.pdf');
+            });
+
+            document.querySelector('.export-excel').addEventListener('click', () => {
+                const ws = XLSX.utils.json_to_sheet(allLogs.map(log => ({
+                    Tipo: log.tipo,
+                    Usuario: log.usuario,
+                    Hora: log.hora,
+                    Día: log.dia
+                })));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+                XLSX.writeFile(wb, 'registros_historicos.xlsx');
+            });
+
+            // Mostrar todos los logs al cargar la página si hay una cerradura seleccionada
+            if (currentLockId) {
+                fetchAllLogs();
+            }
+        });
+
+        function redirectTo(url) {
+            window.location.href = url;
+        }
+    </script>
+</body>
+
+</html>

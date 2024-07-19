@@ -1,0 +1,194 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: #ffffff;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+header h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.logout-icon {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.container {
+    padding: 20px;
+    flex-grow: 1;
+    text-align: center;
+    position: relative;
+}
+
+.card {
+    width: 90%;
+    max-width: 400px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    margin: 0 auto;
+}
+
+.input-container {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.label {
+    font-size: 16px;
+    color: black;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.description {
+    font-size: 14px;
+    color: gray;
+    margin-bottom: 10px;
+}
+
+.dropdown, .input {
+    width: 94%;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #f2f2f2;
+    background-color: #f2f2f2;
+    color: black;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    width: 100%;
+}
+
+.dropdown-item {
+    padding: 12px;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: #f2f2f2;
+}
+
+.icon-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon {
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.button-container {
+    margin-top: 20px;
+}
+
+.button {
+    background-color: #652CB3;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #5a249b;
+}
+
+/* Estilos para la barra de navegación */
+.navbar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background-color: #fff;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.nav-link ion-icon {
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.nav-link span {
+    font-size: 12px;
+    margin-top: 4px;
+    text-align: center;
+}
+
+/* Estilos para el enlace activo */
+.nav-link.active ion-icon,
+.nav-link.active span {
+    color: #652CB3;
+}
+
+@media (max-width: 768px) {
+    .card {
+        padding: 15px;
+    }
+
+    .input, .dropdown {
+        padding: 10px;
+    }
+
+    .button {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        padding: 10px;
+    }
+
+    .input, .dropdown {
+        padding: 8px;
+    }
+
+    .button {
+        padding: 10px;
+        font-size: 12px;
+    }
+}
+
+.hidden {
+    display: none;
+}
+
+.show {
+    display: block;
+}
