@@ -100,10 +100,9 @@
             const endDateSelect = document.getElementById('endDate');
             const logList = document.getElementById('logList');
             let currentLockId = '';
-            let allLogs = []; // Variable para almacenar todos los logs
-            let allDates = new Set(); // Usaremos un Set para evitar duplicados
+            let allLogs = [];
+            let allDates = new Set();
 
-            // Obtener las cerraduras del API
             fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/`)
                 .then(response => response.json())
                 .then(data => {
@@ -121,16 +120,16 @@
                     fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/${currentLockId}/logs`)
                         .then(response => response.json())
                         .then(data => {
-                            allLogs = data; // Guardar todos los logs
-                            populateDateSelectors(); // Poblamos los selectores de fechas
-                            showAllLogs(); // Mostrar todos los logs inicialmente
+                            allLogs = data;
+                            populateDateSelectors();
+                            showAllLogs();
                         })
                         .catch(error => console.error('Error fetching logs:', error));
                 }
             }
 
             function showAllLogs() {
-                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                logList.innerHTML = '';
                 allLogs.forEach(log => {
                     const logItem = document.createElement('li');
                     logItem.textContent = `Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`;
@@ -140,7 +139,7 @@
             }
 
             function showKnownLogs() {
-                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                logList.innerHTML = '';
                 allLogs
                     .filter(log => log.tipo === 'conocido')
                     .forEach(log => {
@@ -152,7 +151,7 @@
             }
 
             function showUnknownLogs() {
-                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                logList.innerHTML = '';
                 allLogs
                     .filter(log => log.tipo === 'desconocido')
                     .forEach(log => {
@@ -164,7 +163,7 @@
             }
 
             function filterByDate(selectedDate) {
-                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                logList.innerHTML = '';
                 allLogs
                     .filter(log => log.dia === selectedDate)
                     .forEach(log => {
@@ -176,7 +175,7 @@
             }
 
             function filterByDateRange(startDate, endDate) {
-                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos elementos
+                logList.innerHTML = '';
                 allLogs
                     .filter(log => new Date(log.dia) >= new Date(startDate) && new Date(log.dia) <= new Date(endDate))
                     .forEach(log => {
@@ -188,7 +187,7 @@
             }
 
             function populateDateSelectors() {
-                allDates.clear(); // Limpiar fechas anteriores
+                allDates.clear();
 
                 allLogs.forEach(log => allDates.add(log.dia));
 
@@ -213,60 +212,59 @@
             function handleLockChange() {
                 currentLockId = lockDropdown.value;
                 if (currentLockId) {
-                    fetchAllLogs(); // Obtener todos los logs cuando se cambia la cerradura
+                    fetchAllLogs();
                 }
             }
 
             lockDropdown.addEventListener('change', handleLockChange);
-
             document.querySelector('.mostrar-todos').addEventListener('click', showAllLogs);
             document.querySelector('.mostrar-conocidos').addEventListener('click', showKnownLogs);
             document.querySelector('.mostrar-desconocidos').addEventListener('click', showUnknownLogs);
 
-            document.getElementById('dateFilter').addEventListener('change', (event) => {
-                const selectedDate = event.target.value;
-                if (selectedDate) {
-                    filterByDate(selectedDate);
-                }
+            dateFilter.addEventListener('change', () => {
+                const selectedDate = dateFilter.value;
+                filterByDate(selectedDate);
             });
 
             document.getElementById('filterRange').addEventListener('click', () => {
-                const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
-                if (startDate && endDate) {
-                    filterByDateRange(startDate, endDate);
-                }
+                const startDate = startDateSelect.value;
+                const endDate = endDateSelect.value;
+                filterByDateRange(startDate, endDate);
             });
 
             document.querySelector('.export-pdf').addEventListener('click', () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-
-                doc.text('Registros de Usuarios Históricos', 10, 10);
-
-                allLogs.forEach((log, index) => {
-                    doc.text(`Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`, 10, 20 + (index * 10));
+                let y = 10;
+                doc.text('Registros de usuarios históricos', 10, y);
+                y += 10;
+                allLogs.forEach(log => {
+                    doc.text(`Acceso por la cámara - ${log.tipo} - Usuario: ${log.usuario} - Hora: ${log.hora} - Día: ${log.dia}`, 10, y);
+                    y += 10;
                 });
 
-                doc.save('registros_historicos.pdf');
+                // Aquí cambiamos la forma de descarga para ser interceptada por Android WebView
+                const pdfDataUri = doc.output('datauristring');
+                window.location.href = `download-file://pdf?data=${encodeURIComponent(pdfDataUri)}`;
             });
 
             document.querySelector('.export-excel').addEventListener('click', () => {
                 const ws = XLSX.utils.json_to_sheet(allLogs.map(log => ({
-                    Tipo: log.tipo,
                     Usuario: log.usuario,
+                    Tipo: log.tipo,
                     Hora: log.hora,
                     Día: log.dia
                 })));
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Registros');
-                XLSX.writeFile(wb, 'registros_historicos.xlsx');
-            });
 
-            // Mostrar todos los logs al cargar la página si hay una cerradura seleccionada
-            if (currentLockId) {
-                fetchAllLogs();
-            }
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Logs');
+
+                const excelData = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+
+                // Aquí cambiamos la forma de descarga para ser interceptada por Android WebView
+                const excelDataUri = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${btoa(excelData)}`;
+                window.location.href = `download-file://excel?data=${encodeURIComponent(excelDataUri)}`;
+            });
         });
 
         function redirectTo(url) {
