@@ -23,9 +23,13 @@ async function login() {
             localStorage.setItem('emailUser', data.user.emailUser);
             localStorage.setItem('numberUser', data.user.numberUser);
 
-
-            // Redireccionar a la página de dashboard
-            window.location.href = 'admin/add-door.html';
+            if (data.user.roleUser == 'admin') {
+                // Redireccionar a la página de dashboard
+                window.location.href = 'admin/add-door.html';
+            } else {
+                // Redireccionar a la página de dashboard
+                window.location.href = 'user/dashboard.html';
+            }
         } else {
             const errorData = await response.json();
             console.error('Login failed:', errorData.message);
