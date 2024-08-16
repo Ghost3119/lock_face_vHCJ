@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Acceso por Cámara</title>
+    <link rel="stylesheet" href="/assets/css/t-r.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>TiempoReal</h1>
+        <ion-icon name="exit-outline" class="logout-icon" onclick="redirectTo('../login.html')"></ion-icon>
+    </header>
+    <div class="container">
+        <h1 class="title">Registro de Acceso por Cámara</h1>
+        <div class="filters">
+            <div class="input-container">
+                <label for="lockDropdown" class="label">Selecciona una cerradura</label>
+                <select id="lockDropdown" class="dropdown">
+                    <!-- Las opciones se llenarán dinámicamente -->
+                </select>
+            </div>
+        </div>
+        <div class="card">
+            <canvas id="accessChart" class="chart"></canvas>
+        </div>
+        <div class="card">
+            <ul id="logList" class="log-list">
+                <!-- Aquí se añadirán los registros dinámicamente -->
+            </ul>
+        </div>
+        <button class="button" id="showGraph">Gráfica</button>
+        <button class="button" id="showKnownUsers">Usuarios conocidos</button>
+        <button class="button" id="showUnknownUsers">Usuarios desconocidos</button>
+    </div>
+    <nav class="navbar">
+        <a href="add-door.html" class="nav-link">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            <span>Nuevo</span>
+        </a>
+        <a href="config.html" class="nav-link">
+            <ion-icon name="settings-outline"></ion-icon>
+            <span>Config</span>
+        </a>
+        <a href="historico.html" class="nav-link">
+            <ion-icon name="time-outline"></ion-icon>
+            <span>Histórico</span>
+        </a>
+        <a href="tiempo-r.html" class="nav-link active">
+            <ion-icon name="bar-chart-outline"></ion-icon>
+            <span>T-R</span>
+        </a>
+        <a href="users.html" class="nav-link">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>Usuarios</span>
+        </a>
+        <a href="doors.html" class="nav-link">
+            <ion-icon name="key-outline"></ion-icon>
+            <span>Puertas</span>
+        </a>
+    </nav>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const logList = document.getElementById('logList');
+            const lockDropdown = document.getElementById('lockDropdown');
+            const accessChart = document.getElementById('accessChart').getContext('2d');
+            let allLogs = []; // Variable para almacenar todos los logs
+            let userId = localStorage.getItem('userId'); // Cambia esto según el usuario
+            let chartInstance;
+
+            // Función para cargar las cerraduras desde la API
+            function loadLocks() {
+                fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(lock => {
+                            const option = document.createElement('option');
+                            option.value = lock._id;
+                            option.textContent = lock.lockName;
+                            lockDropdown.appendChild(option);
+                        });
+                        // Cargar logs para la primera cerradura por defecto
+                        if (data.length > 0) {
+                            lockDropdown.value = data[0]._id;
+                            loadLogs(data[0]._id);
+                        }
+                    })
+                    .catch(error => console.error('Error fetching locks:', error));
+            }
+
+            // Función para cargar los registros de acceso desde la API
+            function loadLogs(lockId) {
+                fetch(`https://lock-face-backend.onrender.com/api/users/${userId}/locks/${lockId}/logs`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(logs => {
+                        console.log('Logs recibidos:', logs); // Depuración
+                        allLogs = logs; // Guardar todos los logs
+                        displayLogs(logs); // Mostrar todos los logs
+                        updateChart(logs); // Actualizar la gráfica
+                    })
+                    .catch(error => console.error('Error fetching logs:', error));
+            }
+
+            // Función para mostrar los registros en la interfaz
+            function displayLogs(logs) {
+                logList.innerHTML = ''; // Limpiar la lista antes de agregar nuevos registros
+                logs.forEach(log => {
+                    const icon = log.tipo === 'conocido' ? 'person-outline' : 'person-outline';
+                    logList.innerHTML += `
+                        <li>
+                            <ion-icon name="${icon}" class="camera-icon"></ion-icon>
+                            Acceso por Cámara - Usuario: ${log.usuario} - Hora: ${log.hora}
+                        </li>
+                    `;
+                });
+            }
+
+            // Función para actualizar la gráfica
+            function updateChart(logs) {
+                // Procesar los datos para la gráfica
+                const labels = logs.map(log => log.hora);
+                const data = logs.map(log => log.tipo === 'conocido' ? 1 : 0); // 1 para conocido, 0 para desconocido
+
+                if (chartInstance) {
+                    chartInstance.destroy(); // Destruir la gráfica actual si existe
+                }
+
+                chartInstance = new Chart(accessChart, {
+                    type: 'bar', // Tipo de gráfica
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Registros de Acceso',
+                            data: data,
+                            backgroundColor: data.map(value => value === 1 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)'),
+                            borderColor: data.map(value => value === 1 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)'),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                beginAtZero: true
+                            },
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Función para mostrar solo los registros conocidos
+            function showKnownUsers() {
+                const knownLogs = allLogs.filter(log => log.tipo === 'conocido');
+                displayLogs(knownLogs);
+                updateChart(knownLogs);
+            }
+
+            // Función para mostrar solo los registros desconocidos
+            function showUnknownUsers() {
+                const unknownLogs = allLogs.filter(log => log.tipo === 'desconocido');
+                displayLogs(unknownLogs);
+                updateChart(unknownLogs);
+            }
+
+            // Configuración de eventos para los botones
+            document.getElementById('showGraph').addEventListener('click', () => {
+                // Mostrar la gráfica con todos los logs
+                updateChart(allLogs);
+            });
+
+            document.getElementById('showKnownUsers').addEventListener('click', showKnownUsers);
+            document.getElementById('showUnknownUsers').addEventListener('click', showUnknownUsers);
+
+            // Configuración de evento para el dropdown de cerraduras
+            lockDropdown.addEventListener('change', (event) => {
+                const selectedLockId = event.target.value;
+                if (selectedLockId) {
+                    loadLogs(selectedLockId);
+                }
+            });
+
+            // Cargar las cerraduras al cargar la página
+            loadLocks();
+        });
+
+        function redirectTo(url) {
+            window.location.href = url;
+        }
+    </script>
+</body>
+
+</html>
