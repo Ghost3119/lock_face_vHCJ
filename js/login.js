@@ -28,7 +28,7 @@ async function login() {
                 window.location.href = 'admin/add-door.html';
             } else {
                 // Redireccionar a la página de dashboard
-                window.location.href = 'user/historico-u.html';
+                window.location.href = 'users/historico-u.html';
             }
         } else {
             const errorData = await response.json();
